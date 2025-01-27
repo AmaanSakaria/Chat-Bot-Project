@@ -33,4 +33,4 @@ sudo rm /etc/nginx/sites-enabled/default
 nginx -t && systemctl reload nginx
  
 # Run the wordpress_install script
-sudo bash /root/Chat-Bot-Project/
+sudo bash /root/Chat-Bot-Project/Wordpress-setup.sh
