@@ -22,14 +22,14 @@ jobs:
     - name: Edit Script Variables
       run: |
         sed -i 's/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g' ./configs/nginx.conf
-        sed -i 's/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g' ./bash_scripts/Frontend.sh
-        sed -i 's/REPLACE_EMAIL/${{ secrets.EMAIL }}/g' ./bash_scripts/Frontend.sh
-        sed -i 's/FRONTEND_IP/${{ secrets.FRONTEND_IP }}/g' ./bash_scripts/Backend.sh
-        sed -i 's/DB_USERNAME/${{ secrets.DB_USERNAME }}/g' ./bash_scripts/Frontend.sh
-        sed -i 's/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g' ./bash_scripts/Frontend.sh
-        sed -i 's/DB_USERNAME/${{ secrets.DB_USERNAME }}/g' ./bash_scripts/Backend.sh
-        sed -i 's/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g' ./bash_scripts/Backend.sh
-        sed -i 's/BACKEND_IP/${{ secrets.BACKEND_IP }}/g' ./bash_scripts/Frontend.sh
+        sed -i 's/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g' ./scripts/Frontend.sh
+        sed -i 's/REPLACE_EMAIL/${{ secrets.EMAIL }}/g' ./scripts/Frontend.sh
+        sed -i 's/FRONTEND_IP/${{ secrets.FRONTEND_IP }}/g' ./scripts/Backend.sh
+        sed -i 's/DB_USERNAME/${{ secrets.DB_USERNAME }}/g' ./scripts/Frontend.sh
+        sed -i 's/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g' ./scripts/Frontend.sh
+        sed -i 's/DB_USERNAME/${{ secrets.DB_USERNAME }}/g' ./scripts/Backend.sh
+        sed -i 's/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g' ./scripts/Backend.sh
+        sed -i 's/BACKEND_IP/${{ secrets.BACKEND_IP }}/g' ./scripts/Frontend.sh
      
         
     - name: Copy files to VM
