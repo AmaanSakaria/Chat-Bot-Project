@@ -1,0 +1,55 @@
+name: Test and Deploy Bash Script
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Debug SSH connection
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
+        chmod 600 private_key
+        ssh -i private_key -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }} "echo 'SSH Connection Successful'"
+
+    - name: Edit Script Variables
+      run: |
+        sed -i 's/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g' ./configs/nginx.conf
+        sed -i 's/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g' ./bash_scripts/Frontend.sh
+        sed -i 's/REPLACE_EMAIL/${{ secrets.EMAIL }}/g' ./bash_scripts/Frontend.sh
+        sed -i 's/FRONTEND_IP/${{ secrets.FRONTEND_IP }}/g' ./bash_scripts/Backend.sh
+        sed -i 's/DB_USERNAME/${{ secrets.DB_USERNAME }}/g' ./bash_scripts/Frontend.sh
+        sed -i 's/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g' ./bash_scripts/Frontend.sh
+        sed -i 's/DB_USERNAME/${{ secrets.DB_USERNAME }}/g' ./bash_scripts/Backend.sh
+        sed -i 's/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g' ./bash_scripts/Backend.sh
+        sed -i 's/BACKEND_IP/${{ secrets.BACKEND_IP }}/g' ./bash_scripts/Frontend.sh
+     
+        
+    - name: Copy files to VM
+      run: |
+        scp -r -i private_key -o StrictHostKeyChecking=no -P ${{ secrets.SSH_PORT }} "${PWD}" ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }}:~
+
+    - name: Run setup script
+      run: |
+        ssh -i private_key -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }} 'sudo sh /home/ubuntu/Chat-Bot-Project/scripts/Frontend.sh'
+
+
+      # Backend
+    - name: Debug BE SSH connection
+      run: |
+        ssh -i private_key -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }} "echo 'SSH Connection Successful'"
+        
+    - name: Copy BE files to VM
+      run: |
+        scp -r -i private_key -o StrictHostKeyChecking=no -P ${{ secrets.SSH_PORT }} "${PWD}" ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }}:~
+
+    - name: Run BE setup script
+      run: |
+        ssh -i private_key -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }} 'sudo sh /home/ubuntu/Chat-Bot-Project/scripts/Backend.sh'
