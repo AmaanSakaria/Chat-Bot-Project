@@ -23,8 +23,8 @@ password=DB_PASSWORD
 echo $username > creds.txt
 echo $password >> creds.txt
 
-aws s3 cp s3://mariadbdatabase/backup.sql.gz /tmp/backup.sql.gz
-sudo gunzip /tmp/backup.sql.gz
+aws s3 cp s3://chat-bot-project-s3/wordpress_dump.sql.gz /tmp/wordpress_dump.sql.gz
+sudo gunzip /tmp/wordpress_dump.sql.gz
 
 # Create the database and user if they do not exist
 sudo mysql -e "CREATE DATABASE IF NOT EXISTS $username"
@@ -32,7 +32,9 @@ sudo mysql -e "CREATE USER IF NOT EXISTS '$username'@'FRONTEND_IP' IDENTIFIED BY
 sudo mysql -e "GRANT ALL PRIVILEGES ON $username.* TO '$username'@'FRONTEND_IP'"
 sudo mysql -e "FLUSH PRIVILEGES"
 
-sudo rm /tmp/backup.sql.gz
+# Restore the database backup
+sudo mysql $username < /tmp/wordpress_dump.sql.gz
+sudo rm /tmp/wordpress_dump.sql.gz
 
 # Securely store the credentials file in AWS S3 for later use or backup
-aws s3 cp creds.txt s3://mariadbdatabase
+aws s3 cp creds.txt s3://chat-bot-project-s3
