@@ -96,7 +96,7 @@ STRING='put your unique phrase here'
 printf '%s\n' "g/$STRING/d" a "$SALT" . w | ed -s /var/www/html/wp-config.php
 
 # Backup wp-config.php file to an AWS S3 bucket
-aws s3 cp /var/www/html/wp-config.php s3://mariadbdatabase
+aws s3 cp /var/www/html/wp-config.php s3://chat-bot-project-s3
 
 # Install and run chkrootkit for rootkit detection
 sudo apt update
