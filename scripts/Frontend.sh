@@ -44,10 +44,10 @@ sudo apt -y install php-fpm php php-cli php-common php-imap php-snmp php-xml php
 sudo php -v >> /home/ubuntu/testing.txt
 
 # Append custom Nginx configuration to a test file
-cat /home/ubuntu/WordPress_Deployment/configs/nginx.conf >> testing.txt
+cat /home/ubuntu/Chat-Bot-Project/configs/nginx.conf >> testing.txt
 
 # Move the Nginx configuration file to the appropriate directory
-sudo mv /home/ubuntu/WordPress_Deployment/configs/nginx.conf /etc/nginx/conf.d/epa-domain.conf
+sudo mv /home/ubuntu/Chat-Bot-Project/configs/nginx.conf /etc/nginx/conf.d/epa-domain.conf
 
 # Validate and reload Nginx with the new configuration
 nginx -t && systemctl reload nginx 
