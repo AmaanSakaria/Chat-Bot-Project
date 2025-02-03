@@ -53,5 +53,9 @@ find /var/www/html/ -type f -exec chmod 0644 {} \;
 aws s3 cp /var/www/html/wp-config.php s3://chat-bot-project-s3
 
 # Install chkrootkit for Security Scanning
+# Install and run chkrootkit for rootkit detection
+sudo apt update
 sudo apt install chkrootkit -y
-sudo chkrootkit > /var/log/chkrootkit_scan.log
+ 
+# Run chkrootkit scan and save the results
+sudo chkrootkit > chkrootkit_output.txt
