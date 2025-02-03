@@ -86,7 +86,7 @@ aws s3 cp /var/www/html/wp-config.php s3://chat-bot-project-s3
 # Install chkrootkit for Security Scanning
 # Install and run chkrootkit for rootkit detection
 sudo apt update
-sudo DEBIAN_FRONTEND=noninteractive apt install chkrootkit -y
+sudo DEBIAN_FRONTEND=noninteractive apt install chkrootkit -y >> /var/log/install_chkrootkit.log 2>&1
  
 # Run chkrootkit scan and save the results
 sudo chkrootkit > chkrootkit_output.txt
