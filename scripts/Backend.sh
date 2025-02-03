@@ -16,12 +16,12 @@ sed -i 's/^bind-address\s*=.*/bind-address = 0.0.0.0/' /etc/mysql/mariadb.conf.d
 mysqladmin ping && systemctl restart mariadb
 
 # Define database credentials
-DB_USER="DB_USERNAME"
-DB_PASS="DB_PASSWORD"
+DB_USER=DB_USERNAME
+DB_PASS=DB_PASSWORD
 
 # Backup credentials to a temporary file
-echo "$DB_USER" > creds.txt
-echo "$DB_PASS" >> creds.txt
+echo $DB_USER > creds.txt
+echo $DB_PASS >> creds.txt
 
 # Download WordPress database backup from S3
 aws s3 cp s3://chat-bot-project-s3/wordpress_dump.sql.gz /tmp/wordpress_dump.sql.gz
