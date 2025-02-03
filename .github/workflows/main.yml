@@ -1,4 +1,4 @@
-name: Deploy ChatBot with Bash Scripts
+name: Test and Deploy Bash Script
 
 on:
   push:
@@ -10,43 +10,46 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repository
+    - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set Up SSH Access
+    - name: Debug SSH connection
       run: |
-        mkdir -p ~/.ssh
-        echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-        chmod 600 ~/.ssh/id_rsa
-        ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.FRONTEND_IP }} >> ~/.ssh/known_hosts
-        ssh-keyscan -p ${{ secrets.SSH_PORT }} ${{ secrets.BACKEND_IP }} >> ~/.ssh/known_hosts
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > private_key
+        chmod 600 private_key
+        ssh -i private_key -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }} "echo 'SSH Connection Successful'"
 
-    - name: Test SSH Connection (Frontend)
-      run: ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }} "echo '✅ Frontend SSH Connected'"
-
-    - name: Test SSH Connection (Backend)
-      run: ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }} "echo '✅ Backend SSH Connected'"
-
-    - name: Update Configuration Files
+    - name: Edit Script Variables
       run: |
-        sed -i "s/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g" ./configs/nginx.conf
-        sed -i "s/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g" ./scripts/Frontend.sh
-        sed -i "s/REPLACE_EMAIL/${{ secrets.EMAIL }}/g" ./scripts/Frontend.sh
-        sed -i "s/BACKEND_IP/${{ secrets.BACKEND_IP }}/g" ./scripts/Frontend.sh
-        sed -i "s/DB_USERNAME/${{ secrets.DB_USERNAME }}/g" ./scripts/Frontend.sh
-        sed -i "s/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g" ./scripts/Frontend.sh
-        sed -i "s/FRONTEND_IP/${{ secrets.FRONTEND_IP }}/g" ./scripts/Backend.sh
-        sed -i "s/DB_USERNAME/${{ secrets.DB_USERNAME }}/g" ./scripts/Backend.sh
-        sed -i "s/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g" ./scripts/Backend.sh
+        sed -i 's/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g' ./configs/nginx.conf
+        sed -i 's/REPLACE_DOMAIN/${{ secrets.DOMAIN }}/g' ./scripts/Frontend.sh
+        sed -i 's/REPLACE_EMAIL/${{ secrets.EMAIL }}/g' ./scripts/Frontend.sh
+        sed -i 's/FRONTEND_IP/${{ secrets.FRONTEND_IP }}/g' ./scripts/Backend.sh
+        sed -i 's/DB_USERNAME/${{ secrets.DB_USERNAME }}/g' ./scripts/Frontend.sh
+        sed -i 's/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g' ./scripts/Frontend.sh
+        sed -i 's/DB_USERNAME/${{ secrets.DB_USERNAME }}/g' ./scripts/Backend.sh
+        sed -i 's/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g' ./scripts/Backend.sh
+        sed -i 's/BACKEND_IP/${{ secrets.BACKEND_IP }}/g' ./scripts/Frontend.sh
+     
+        
+    - name: Copy files to VM
+      run: |
+        scp -r -i private_key -o StrictHostKeyChecking=no -P ${{ secrets.SSH_PORT }} "${PWD}" ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }}:~
 
-    - name: Upload Files to Frontend Server
-      run: scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r configs/ scripts/ ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }}:~/Chat-Bot-Project/
+    - name: Run setup script
+      run: |
+        ssh -i private_key -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }} 'sudo sh /home/ubuntu/Chat-Bot-Project/scripts/Frontend.sh'
 
-    - name: Execute Frontend Deployment
-      run: ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }} "bash ~/Chat-Bot-Project/scripts/Frontend.sh"
 
-    - name: Upload Files to Backend Server
-      run: scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r scripts/ ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }}:~/Chat-Bot-Project/
+      # Backend
+    - name: Debug BE SSH connection
+      run: |
+        ssh -i private_key -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }} "echo 'SSH Connection Successful'"
+        
+    - name: Copy BE files to VM
+      run: |
+        scp -r -i private_key -o StrictHostKeyChecking=no -P ${{ secrets.SSH_PORT }} "${PWD}" ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }}:~
 
-    - name: Execute Backend Deployment
-      run: ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }} "bash ~/Chat-Bot-Project/scripts/Backend.sh"
+    - name: Run BE setup script
+      run: |
+        ssh -i private_key -o StrictHostKeyChecking=no -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }} 'sudo sh /home/ubuntu/Chat-Bot-Project/scripts/Backend.sh'
