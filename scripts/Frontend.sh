@@ -1,106 +1,41 @@
 #!/bin/bash
 
-# Log file path
-LOG_FILE="/var/log/script_execution.log"
+# System Update & Upgrade
+sudo apt update -y && sudo apt upgrade -y
 
-# Function to check the exit status of the last executed command
-check_exit_status() {
-    if [ $? -ne 0 ]; then
-        echo "Error: $1 failed." | tee -a $LOG_FILE
-        exit 1
-    else
-        echo "$1 succeeded." | tee -a $LOG_FILE
-    fi
-}
-
-# Clear the log file at the beginning of the script
-> $LOG_FILE
-
-# Update and Upgrade package lists
-echo "Running apt update..." | tee -a $LOG_FILE
-sudo apt -y update && sudo apt -y upgrade
-check_exit_status "apt update and upgrade"
-
-# Install the AWS CLI tool using Snap for managing AWS resources
+# Install AWS CLI for managing AWS resources
 snap install aws-cli --classic
 
-# Run another update and upgrade to ensure all packages are up-to-date
-sudo apt -y update && sudo apt -y upgrade
+# Install MariaDB server & client
+apt install -y mariadb-server mariadb-client
 
-# Create a test file for debugging purposes
-sudo touch /home/ubuntu/testing.txt
+# Allow external connections to MariaDB
+sed -i 's/^bind-address\s*=.*/bind-address = 0.0.0.0/' /etc/mysql/mariadb.conf.d/50-server.cnf
 
-# Install and start Nginx web server
-sudo apt -y install nginx
-sudo systemctl start nginx && sudo systemctl enable nginx 
+# Restart MariaDB & Verify Status
+mysqladmin ping && systemctl restart mariadb
 
-# Check the status of Nginx and log it to the test file
-sudo systemctl status nginx > /home/ubuntu/testing.txt
+# Define database credentials
+DB_USER="DB_USERNAME"
+DB_PASS="DB_PASSWORD"
 
-# Install PHP and necessary extensions for WordPress
-sudo apt -y install php-fpm php php-cli php-common php-imap php-snmp php-xml php-zip php-mbstring php-curl php-mysqli php-gd php-intl
+# Backup credentials to a temporary file
+echo "$DB_USER" > creds.txt
+echo "$DB_PASS" >> creds.txt
 
-# Log PHP version to the test file for verification
-sudo php -v >> /home/ubuntu/testing.txt
+# Download WordPress database backup from S3
+aws s3 cp s3://chat-bot-project-s3/wordpress_dump.sql.gz /tmp/wordpress_dump.sql.gz
+sudo gunzip /tmp/wordpress_dump.sql.gz
 
-# Append custom Nginx configuration to a test file
-cat /home/ubuntu/Chat-Bot-Project/configs/nginx.conf >> testing.txt
+# Create database & user if not exists
+sudo mysql -e "CREATE DATABASE IF NOT EXISTS $DB_USER"
+sudo mysql -e "CREATE USER IF NOT EXISTS '$DB_USER'@'FRONTEND_IP' IDENTIFIED BY '$DB_PASS'"
+sudo mysql -e "GRANT ALL PRIVILEGES ON $DB_USER.* TO '$DB_USER'@'FRONTEND_IP'"
+sudo mysql -e "FLUSH PRIVILEGES"
 
-# Move the Nginx configuration file to the appropriate directory
-sudo mv /home/ubuntu/Chat-Bot-Project/configs/nginx.conf /etc/nginx/conf.d/epa-domain.conf
+# Restore database backup
+sudo mysql $DB_USER < /tmp/wordpress_dump.sql.gz
+sudo rm /tmp/wordpress_dump.sql.gz
 
-# Validate and reload Nginx with the new configuration
-nginx -t && systemctl reload nginx 
-
-# Update package list and install Certbot for SSL certificate management
-sudo apt -y update && sudo apt -y upgrade
-sudo apt -y install certbot
-sudo apt -y install python3-certbot-nginx
-
-# Define email and domain variables for SSL certificate registration
-EMAIL="REPLACE_EMAIL"
-DOMAIN="REPLACE_DOMAIN"
-
-# Obtain and install an SSL certificate using Certbot
-sudo certbot --nginx --non-interactive --agree-tos --email $EMAIL -d $DOMAIN
-
-# Perform another Nginx configuration test and reload if successful
-sudo nginx -t && systemctl reload nginx
-
-# Install WordPress by downloading and extracting it
-sudo rm -rf /var/www/html
-sudo apt -y install unzip 
-sudo wget -O /var/www/latest.zip https://wordpress.org/latest.zip 
-sudo unzip /var/www/latest.zip -d /var/www/
-sudo rm /var/www/latest.zip 
-
-# Rename extracted WordPress folder to match web root
-mv /var/www/wordpress /var/www/html
-
-# Set up WordPress configuration file with appropriate permissions
-sudo mv /var/www/html/wp-config-sample.php /var/www/html/wp-config.php
-sudo chmod 640 /var/www/html/wp-config.php 
-sudo chown -R www-data:www-data /var/www/html/
-sudo find /var/www/html/ -type d -exec chmod 0755 {} \;
-sudo find /var/www/html/ -type f -exec chmod 0644 {} \;
-
-# Update wp-config.php with database credentials
-sed -i "s/username_here/DB_USERNAME/g" /var/www/html/wp-config.php
-sed -i "s/password_here/DB_PASSWORD/g" /var/www/html/wp-config.php
-sed -i "s/database_name_here/DB_USERNAME/g" /var/www/html/wp-config.php
-sed -i "s/localhost/BACKEND_IP/g" /var/www/html/wp-config.php
-
-# Fetch WordPress security salts and insert them into wp-config.php
-SALT=$(curl -L https://api.wordpress.org/secret-key/1.1/salt/)
-STRING='put your unique phrase here'
-printf '%s\n' "g/$STRING/d" a "$SALT" . w | ed -s /var/www/html/wp-config.php
-
-# Backup wp-config.php file to an AWS S3 bucket
-aws s3 cp /var/www/html/wp-config.php s3://chat-bot-project-s3
-
-# Install and run chkrootkit for rootkit detection
-sudo apt update
-sudo apt install chkrootkit -y
-
-# Run chkrootkit scan and save the results
-sudo chkrootkit > chkrootkit_output.txt
+# Securely store credentials in AWS S3
+aws s3 cp creds.txt s3://chat-bot-project-s3
