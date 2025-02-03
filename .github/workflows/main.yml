@@ -40,13 +40,13 @@ jobs:
         sed -i "s/DB_PASSWORD/${{ secrets.DB_PASSWORD }}/g" ./scripts/Backend.sh
 
     - name: Upload Files to Frontend Server
-      run: scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r configs/ scripts/ ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }}:~/chatbot_project/
+      run: scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r configs/ scripts/ ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }}:~/Chat-Bot-Project/
 
     - name: Execute Frontend Deployment
-      run: ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }} "bash ~/chatbot_project/scripts/Frontend.sh"
+      run: ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.FRONTEND_IP }} "bash ~/Chat-Bot-Project/scripts/Frontend.sh"
 
     - name: Upload Files to Backend Server
-      run: scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r scripts/ ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }}:~/chatbot_project/
+      run: scp -i ~/.ssh/id_rsa -P ${{ secrets.SSH_PORT }} -r scripts/ ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }}:~/Chat-Bot-Project/
 
     - name: Execute Backend Deployment
-      run: ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }} "bash ~/chatbot_project/scripts/Backend.sh"
+      run: ssh -i ~/.ssh/id_rsa -p ${{ secrets.SSH_PORT }} ${{ secrets.SSH_USER }}@${{ secrets.BACKEND_IP }} "bash ~/Chat-Bot-Project/scripts/Backend.sh"
