@@ -33,7 +33,7 @@ sudo systemctl start nginx && sudo systemctl enable nginx
 verify_command "Nginx Installation"
  
 # Install PHP & Extensions for WordPress
-sudo apt install -y php-fpm php php-cli php-common php-imap php-snmp php-xml php-zip php-mbstring php-curl php-mysqli php-gd php-intl
+#sudo apt install -y php-fpm php php-cli php-common php-imap php-snmp php-xml php-zip php-mbstring php-curl php-mysqli php-gd php-intl
  
 # Move the Nginx configuration file to the appropriate directory
 sudo mv /home/ubuntu/Chat-Bot-Project/configs/nginx.conf /etc/nginx/conf.d/domain.conf
